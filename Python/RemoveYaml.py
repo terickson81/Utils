@@ -57,3 +57,6 @@ def remove_yaml_line(yaml_file, string_to_remove):
     
     with open(yaml_file, 'w') as f:
         f.write('\n'.join(data))
+
+
+remove_yaml_line('example.yml', 'string_to_remove')
