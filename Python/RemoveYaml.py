@@ -1,4 +1,7 @@
 import yaml
+import pytest
+from tempfile import NamedTemporaryFile
+#from remove_yaml_line import remove_yaml_line
 
 def remove_yaml_line(yaml_file, string_to_remove):
     with open(yaml_file, 'r') as f:
@@ -90,3 +93,47 @@ def remove_yaml_line(yaml_file, string_to_remove, section=None):
         f.writelines(new_data)
 
 remove_yaml_line('example.yml', 'string_to_remove', 'section_name')
+
+
+
+
+@pytest.fixture
+def yaml_file():
+    # create a temporary YAML file for testing
+    file = NamedTemporaryFile(mode='w', delete=False)
+    file.write('section1:\n  - item1\n  # comment\n  - item2\nsection2:\n  - item3\n')
+    file.close()
+    yield file.name
+    # delete the temporary file after the test is done
+    import os
+    os.remove(file.name)
+
+def test_remove_line(yaml_file):
+    # test removing a line from a YAML file
+    remove_yaml_line(yaml_file, 'item2')
+    with open(yaml_file, 'r') as f:
+        assert f.read() == 'section1:\n  - item1\nsection2:\n  - item3\n'
+        
+def test_remove_line_with_comments(yaml_file):
+    # test removing a line with comments from a YAML file
+    remove_yaml_line(yaml_file, 'item1')
+    with open(yaml_file, 'r') as f:
+        assert f.read() == 'section1:\n  # comment\n  - item2\nsection2:\n  - item3\n'
+
+def test_remove_line_in_section(yaml_file):
+    # test removing a line in a specific section from a YAML file
+    remove_yaml_line(yaml_file, 'item3', 'section2')
+    with open(yaml_file, 'r') as f:
+        assert f.read() == 'section1:\n  - item1\n  # comment\n  - item2\nsection2:\n'
+
+def test_remove_line_not_found(yaml_file):
+    # test removing a line that is not found in a YAML file
+    remove_yaml_line(yaml_file, 'item4')
+    with open(yaml_file, 'r') as f:
+        assert f.read() == 'section1:\n  - item1\n  # comment\n  - item2\nsection2:\n  - item3\n'
+
+def test_remove_line_in_nonexistent_section(yaml_file):
+    # test removing a line in a nonexistent section from a YAML file
+    remove_yaml_line(yaml_file, 'item2', 'section3')
+    with open(yaml_file, 'r') as f:
+        assert f.read() == 'section1:\n  - item1\n  # comment\n  - item2\nsection2:\n  - item3\n'
