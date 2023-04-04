@@ -137,3 +137,74 @@ def test_remove_line_in_nonexistent_section(yaml_file):
     remove_yaml_line(yaml_file, 'item2', 'section3')
     with open(yaml_file, 'r') as f:
         assert f.read() == 'section1:\n  - item1\n  # comment\n  - item2\nsection2:\n  - item3\n'
+        
+        
+        
+        
+import datetime
+
+def delete_entry(env, spec_yaml, entry):
+    env_key = env + ":"
+    with open(spec_yaml, 'r') as input_file:
+        input_lines = input_file.readlines()
+
+    with open(spec_yaml, 'w') as output_file:
+        env_found = False
+        match_found = False
+        for line in input_lines:
+            if env_key not in line and not env_found:
+                output_file.write(line)
+            else:
+                env_found = True
+                if match_found:
+                    output_file.write("# " + line.rstrip() + "  # Commented on " + str(datetime.datetime.now()) + "\n")
+                elif entry not in line:
+                    output_file.write(line)
+                else:
+                    match_found = True
+
+    if not match_found:
+        print("Entry '{}' not found for environment '{}' in '{}'.".format(entry, env, spec_yaml))
+        
+        
+ import os
+import pytest
+import datetime
+from delete_entry import delete_entry
+
+@pytest.fixture
+def spec_file(tmp_path):
+    data = {'env1:': ['entry1', 'entry2'],
+            'env2:': ['entry3', 'entry4']}
+    file_path = tmp_path / 'spec.yml'
+    with open(file_path, 'w') as f:
+        yaml.safe_dump(data, f)
+    return file_path
+
+def test_delete_entry_success(spec_file):
+    env = 'env1'
+    entry = 'entry1'
+    delete_entry(env, str(spec_file), entry)
+    with open(spec_file, 'r') as f:
+        data = yaml.safe_load(f)
+        assert entry not in data[env + ':']
+
+def test_delete_entry_not_found(spec_file):
+    env = 'env1'
+    entry = 'entry3'
+    with pytest.raises(SystemExit):
+        delete_entry(env, str(spec_file), entry)
+
+def test_delete_entry_commented_out(spec_file):
+    env = 'env1'
+    entry = 'entry1'
+    delete_entry(env, str(spec_file), entry)
+    with open(spec_file, 'r') as f:
+        for line in f:
+            if entry in line:
+                assert line.startswith("#")
+                assert str(datetime.datetime.now().year) in line
+                assert str(datetime.datetime.now().month) in line
+                assert str(datetime.datetime.now().day) in line
+
+
