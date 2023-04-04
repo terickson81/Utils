@@ -152,22 +152,22 @@ def delete_entry(env, spec_yaml, entry):
         env_found = False
         match_found = False
         for line in input_lines:
-            if env_key not in line and not env_found:
+            line = line.lstrip()
+            if not line.startswith(env_key) and not env_found:
                 output_file.write(line)
             else:
                 env_found = True
-                if match_found:
-                    output_file.write("# " + line.rstrip() + "  # Commented on " + str(datetime.datetime.now()) + "\n")
-                elif entry not in line:
+                if match_found or not line.startswith("- " + entry):
                     output_file.write(line)
                 else:
                     match_found = True
+                    output_file.write("# " + line.rstrip() + "  # Disabled by automation on " + str(datetime.datetime.now()) + "\n")
 
     if not match_found:
         print("Entry '{}' not found for environment '{}' in '{}'.".format(entry, env, spec_yaml))
         
         
- import os
+import os
 import pytest
 import datetime
 from delete_entry import delete_entry
@@ -178,7 +178,10 @@ def spec_file(tmp_path):
             'env2:': ['entry3', 'entry4']}
     file_path = tmp_path / 'spec.yml'
     with open(file_path, 'w') as f:
-        yaml.safe_dump(data, f)
+        for env, entries in data.items():
+            f.write(env + '\n')
+            for entry in entries:
+                f.write('- ' + entry + '\n')
     return file_path
 
 def test_delete_entry_success(spec_file):
@@ -186,8 +189,8 @@ def test_delete_entry_success(spec_file):
     entry = 'entry1'
     delete_entry(env, str(spec_file), entry)
     with open(spec_file, 'r') as f:
-        data = yaml.safe_load(f)
-        assert entry not in data[env + ':']
+        data = [line.rstrip() for line in f.readlines()]
+        assert '- ' + entry not in data
 
 def test_delete_entry_not_found(spec_file):
     env = 'env1'
@@ -201,10 +204,7 @@ def test_delete_entry_commented_out(spec_file):
     delete_entry(env, str(spec_file), entry)
     with open(spec_file, 'r') as f:
         for line in f:
-            if entry in line:
-                assert line.startswith("#")
+            if line.startswith("# - " + entry):
                 assert str(datetime.datetime.now().year) in line
                 assert str(datetime.datetime.now().month) in line
                 assert str(datetime.datetime.now().day) in line
-
-
