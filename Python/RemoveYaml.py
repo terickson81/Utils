@@ -208,3 +208,23 @@ def test_delete_entry_commented_out(spec_file):
                 assert str(datetime.datetime.now().year) in line
                 assert str(datetime.datetime.now().month) in line
                 assert str(datetime.datetime.now().day) in line
+                
+                
+   import yaml
+
+def comment_out_entry(yml_file, section, entry):
+    # Load the YAML file
+    with open(yml_file, 'r') as f:
+        data = yaml.load(f, Loader=yaml.FullLoader)
+
+    # Find the specified section and entry
+    if section in data and entry in data[section]:
+        # Comment out the entry by adding a '#' character to the beginning of the line
+        data[section][entry] = '#' + str(data[section][entry])
+
+    # Write the updated data back to the YAML file
+    with open(yml_file, 'w') as f:
+        yaml.dump(data, f)
+
+  comment_out_entry('example.yml', 'database', 'password')
+
