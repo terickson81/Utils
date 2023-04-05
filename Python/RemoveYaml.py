@@ -228,3 +228,76 @@ def comment_out_entry(yml_file, section, entry):
 
   comment_out_entry('example.yml', 'database', 'password')
 
+
+
+import os
+import pytest
+import tempfile
+from datetime import datetime
+
+def test_disable_entry_found():
+    spec_yaml = "example.yml"
+    entry = "some_entry"
+    
+    with open(spec_yaml, 'w') as file:
+        file.write(f"dev:\n- {entry}\n- other_entry\n")
+    
+    disable_entry(spec_yaml, entry)
+    
+    with open(spec_yaml, 'r') as file:
+        contents = file.read()
+        assert "# - some_entry  # Disabled by automation on " in contents
+        assert "- other_entry\n" in contents
+    
+    os.remove(spec_yaml)
+
+def test_disable_entry_not_found():
+    spec_yaml = "example.yml"
+    entry = "some_entry"
+    
+    with open(spec_yaml, 'w') as file:
+        file.write("dev:\n- other_entry\n")
+    
+    disable_entry(spec_yaml, entry)
+    
+    with open(spec_yaml, 'r') as file:
+        contents = file.read()
+        assert "Could not find a resource" in capsys.readouterr().out
+        assert "dev:\n- other_entry\n" in contents
+    
+    os.remove(spec_yaml)
+
+def test_disable_entry_new_section():
+    spec_yaml = "example.yml"
+    entry = "some_entry"
+    
+    with open(spec_yaml, 'w') as file:
+        file.write("dev:\n- other_entry\n- section:\n  - some_entry\n")
+    
+    disable_entry(spec_yaml, entry)
+    
+    with open(spec_yaml, 'r') as file:
+        contents = file.read()
+        assert "# - section:\n" in contents
+        assert "- other_entry\n" in contents
+    
+    os.remove(spec_yaml)
+
+def test_disable_entry_comments():
+    spec_yaml = "example.yml"
+    entry = "some_entry"
+    
+    with open(spec_yaml, 'w') as file:
+        file.write("dev:\n# comment\n- other_entry # comment\n- # some_entry: value\n")
+    
+    disable_entry(spec_yaml, entry)
+    
+    with open(spec_yaml, 'r') as file:
+        contents = file.read()
+        assert "# - some_entry: value" in contents
+        assert "# Disabled by automation on " in contents
+        assert "dev:\n# comment\n- other_entry # comment\n" in contents
+    
+    os.remove(spec_yaml)
+
+
