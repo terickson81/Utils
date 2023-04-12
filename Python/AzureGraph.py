@@ -17,3 +17,29 @@ connected_devices = [resource['id'] for resource in query_response]
 
 # Print the list of connected devices
 print(connected_devices)
+
+
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.network import NetworkManagementClient
+from azure.mgmt.network.models import NetworkInterfaceIPConfiguration
+
+# Set up Azure credentials
+credential = DefaultAzureCredential()
+
+# Set up the network management client
+network_client = NetworkManagementClient(credential, subscription_id)
+
+# Get the list of all network interfaces in the subscription
+network_interfaces = network_client.network_interfaces.list_all()
+
+# Filter the list of network interfaces to only include those connected to the VNet
+vnet_interfaces = [iface for iface in network_interfaces
+                   if any(isinstance(ip_conf.subnet, NetworkInterfaceIPConfiguration)
+                          and ip_conf.subnet.id.startswith(f'/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.Network/virtualNetworks/{vnet_name}')
+                          for ip_conf in iface.ip_configurations)]
+
+# Extract the IDs of all connected devices from the list of network interfaces
+connected_devices = [iface.id for iface in vnet_interfaces]
+
+# Print the list of connected devices
+print(connected_devices)
