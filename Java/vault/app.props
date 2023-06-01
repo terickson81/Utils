@@ -1,0 +1,6 @@
+spring.cloud.vault.host=localhost
+spring.cloud.vault.port=8200
+spring.cloud.vault.scheme=http
+spring.cloud.vault.authentication=TOKEN
+spring.cloud.vault.token=s.Kd8VBi9zDNOSezDQIPKFb9S2
+spring.cloud.vault.kv.enabled=true
