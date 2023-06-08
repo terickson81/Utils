@@ -1,0 +1,13 @@
+<dependencies>
+    <!-- ...other dependencies... -->
+    <dependency>
+        <groupId>com.bettercloud</groupId>
+        <artifactId>vault-java-driver</artifactId>
+        <version>5.1.0</version> <!-- Check for latest version -->
+    </dependency>
+    <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>okhttp</artifactId>
+        <version>4.9.1</version> <!-- Check for latest version -->
+    </dependency>
+</dependencies>
